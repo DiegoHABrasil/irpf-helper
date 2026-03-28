@@ -1,0 +1,199 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model TaxYear {
+  id        Int           @id @default(autoincrement())
+  year      Int           @unique
+  status    String        @default("draft") // draft | complete
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  documents              Document[]
+  bensDireitos           IrpfBensDireitos[]
+  rendimentosIsentos     IrpfRendimentosIsentos[]
+  rendimentosExclusivos  IrpfRendimentosExclusivos[]
+  rendaVariavel          IrpfRendaVariavel[]
+  operacoes              Operacao[]
+  chatMessages           ChatMessage[]
+
+  @@map("tax_years")
+}
+
+model Document {
+  id                Int      @id @default(autoincrement())
+  taxYearId         Int      @map("tax_year_id")
+  filename          String
+  filePath          String   @map("file_path")
+  docType           String   @map("doc_type") // INFORME_RENDIMENTOS | NOTA_CORRETAGEM | EXTRATO_RENDA_FIXA | INFORME_FII | OUTRO
+  rawText           String?  @map("raw_text")
+  processingStatus  String   @default("pending") @map("processing_status") // pending | processing | done | error
+  llmProvider       String?  @map("llm_provider")
+  errorMessage      String?  @map("error_message")
+  sourceInstitution String?  @map("source_institution")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  taxYear     TaxYear      @relation(fields: [taxYearId], references: [id])
+  extractions Extraction[]
+  operacoes   Operacao[]
+
+  @@map("documents")
+}
+
+model Extraction {
+  id             Int      @id @default(autoincrement())
+  documentId     Int      @map("document_id")
+  extractionType String?  @map("extraction_type")
+  rawJson        String   @map("raw_json") // JSON stored as text
+  validated      Boolean  @default(false)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  document              Document                   @relation(fields: [documentId], references: [id])
+  bensDireitos          IrpfBensDireitos[]
+  rendimentosIsentos    IrpfRendimentosIsentos[]
+  rendimentosExclusivos IrpfRendimentosExclusivos[]
+  rendaVariavel         IrpfRendaVariavel[]
+  operacoes             Operacao[]
+
+  @@map("extractions")
+}
+
+model IrpfBensDireitos {
+  id                     Int      @id @default(autoincrement())
+  taxYearId              Int      @map("tax_year_id")
+  extractionId           Int?     @map("extraction_id")
+
+  grupo                  String
+  codigo                 String
+  discriminacao          String
+  situacao31_12_anterior Decimal  @default(0) @map("situacao_31_12_anterior")
+  situacao31_12_atual    Decimal  @default(0) @map("situacao_31_12_atual")
+  cnpj                   String?
+  localizacao            String   @default("105")
+
+  ticker                 String?
+  tipoAtivo              String?  @map("tipo_ativo") // acao | fii | etf | bdr | opcao | cdb | lci | lca | tesouro_direto | debenture | cri | cra | poupanca | outro
+  quantidade             Decimal?
+  custoMedio             Decimal? @map("custo_medio")
+
+  createdAt              DateTime @default(now()) @map("created_at")
+
+  taxYear    TaxYear     @relation(fields: [taxYearId], references: [id])
+  extraction Extraction? @relation(fields: [extractionId], references: [id])
+
+  @@map("irpf_bens_direitos")
+}
+
+model IrpfRendimentosIsentos {
+  id             Int      @id @default(autoincrement())
+  taxYearId      Int      @map("tax_year_id")
+  extractionId   Int?     @map("extraction_id")
+
+  tipoRendimento String   @map("tipo_rendimento")
+  cnpjFonte      String?  @map("cnpj_fonte")
+  nomeFonte      String?  @map("nome_fonte")
+  valor          Decimal
+  descricao      String?
+
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  taxYear    TaxYear     @relation(fields: [taxYearId], references: [id])
+  extraction Extraction? @relation(fields: [extractionId], references: [id])
+
+  @@map("irpf_rendimentos_isentos")
+}
+
+model IrpfRendimentosExclusivos {
+  id             Int      @id @default(autoincrement())
+  taxYearId      Int      @map("tax_year_id")
+  extractionId   Int?     @map("extraction_id")
+
+  tipoRendimento String   @map("tipo_rendimento")
+  cnpjFonte      String?  @map("cnpj_fonte")
+  nomeFonte      String?  @map("nome_fonte")
+  valor          Decimal
+  descricao      String?
+
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  taxYear    TaxYear     @relation(fields: [taxYearId], references: [id])
+  extraction Extraction? @relation(fields: [extractionId], references: [id])
+
+  @@map("irpf_rendimentos_exclusivos")
+}
+
+model IrpfRendaVariavel {
+  id                Int      @id @default(autoincrement())
+  taxYearId         Int      @map("tax_year_id")
+  extractionId      Int?     @map("extraction_id")
+
+  mes               Int
+  tipoMercado       String   @map("tipo_mercado") // mercado_a_vista | opcoes | futuro | day_trade
+
+  resultadoLiquido  Decimal? @map("resultado_liquido")
+  prejuizoAcumulado Decimal  @default(0) @map("prejuizo_acumulado")
+  irRetidoFonte     Decimal  @default(0) @map("ir_retido_fonte")
+  irDevido          Decimal  @default(0) @map("ir_devido")
+
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  taxYear    TaxYear     @relation(fields: [taxYearId], references: [id])
+  extraction Extraction? @relation(fields: [extractionId], references: [id])
+
+  @@unique([taxYearId, mes, tipoMercado])
+  @@map("irpf_renda_variavel")
+}
+
+model Operacao {
+  id               Int      @id @default(autoincrement())
+  taxYearId        Int      @map("tax_year_id")
+  documentId       Int?     @map("document_id")
+  extractionId     Int?     @map("extraction_id")
+
+  dataOperacao     DateTime @map("data_operacao")
+  ticker           String
+  tipo             String   // compra | venda
+  quantidade       Decimal
+  precoUnitario    Decimal  @map("preco_unitario")
+  valorTotal       Decimal  @map("valor_total")
+  taxas            Decimal  @default(0)
+  dayTrade         Boolean  @default(false) @map("day_trade")
+
+  custoMedioNaData Decimal? @map("custo_medio_na_data")
+  ganhoPerda       Decimal? @map("ganho_perda")
+
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  taxYear    TaxYear     @relation(fields: [taxYearId], references: [id])
+  document   Document?   @relation(fields: [documentId], references: [id])
+  extraction Extraction? @relation(fields: [extractionId], references: [id])
+
+  @@index([ticker, dataOperacao], name: "idx_ticker_data")
+  @@map("operacoes")
+}
+
+model ChatMessage {
+  id            Int      @id @default(autoincrement())
+  taxYearId     Int      @map("tax_year_id")
+  role          String   // user | assistant
+  content       String
+  contextDocIds String?  @map("context_doc_ids") // JSON array stored as text
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  taxYear TaxYear @relation(fields: [taxYearId], references: [id])
+
+  @@map("chat_messages")
+}
+
+model Setting {
+  id           Int      @id @default(autoincrement())
+  settingKey   String   @unique @map("setting_key")
+  settingValue String   @map("setting_value")
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
