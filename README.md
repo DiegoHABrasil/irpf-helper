@@ -2,7 +2,7 @@
 
 Assistente local para preenchimento da declaração de Imposto de Renda (IRPF). Processa PDFs de corretoras e bancos via LLM e popula automaticamente os campos corretos das fichas do programa da Receita Federal.
 
-> **Privacidade em primeiro lugar:** todos os dados ficam no seu computador. Apenas o texto extraído dos PDFs é enviado ao provedor LLM configurado. Nenhuma informação é transmitida a servidores externos além do provedor escolhido.
+> **Disclaimer de privacidade :** todos os dados ficam no seu computador. No entanto, se você usar uma LLM não local e paga, você estará enviando por sua responsabilidade os seus dados para o fornecedor.
 
 ---
 
