@@ -2,7 +2,8 @@
   "name": "irpf-helper",
   "version": "1.0.0",
   "description": "Assistente de Declaração de Imposto de Renda - processa PDFs e popula dados do IRPF via LLM",
-  "private": true,
+  "private": false,
+  "license": "MIT",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
