@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/prisma'
 
+export async function DELETE(req: NextRequest) {
+  const id = Number(req.nextUrl.searchParams.get('id'))
+  if (isNaN(id)) return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
+  await prisma.irpfBensDireitos.delete({ where: { id } })
+  return NextResponse.json({ ok: true })
+}
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: { year: string } }

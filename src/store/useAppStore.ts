@@ -102,6 +102,13 @@ interface AppState {
   addRendimentoExclusivo: (item: RendimentoItem) => void
   addOperacao: (item: OperacaoItem) => void
 
+  removeDocument: (id: number) => void
+  removeBensDireitos: (id: number) => void
+  removeRendimentoIsento: (id: number) => void
+  removeRendimentoExclusivo: (id: number) => void
+  removeOperacao: (id: number) => void
+  removeRendaVariavel: (id: number) => void
+
   messages: StoreChatMessage[]
   isChatLoading: boolean
   sendMessage: (content: string) => Promise<void>
@@ -159,6 +166,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((s) => ({ rendimentosExclusivos: [...s.rendimentosExclusivos, { ...item, isNew: true }] })),
   addOperacao: (item) =>
     set((s) => ({ operacoes: [...s.operacoes, { ...item, isNew: true }] })),
+
+  removeDocument:          (id) => set((s) => ({ documents:              s.documents.filter((x) => x.id !== id) })),
+  removeBensDireitos:      (id) => set((s) => ({ bensDireitos:           s.bensDireitos.filter((x) => x.id !== id) })),
+  removeRendimentoIsento:  (id) => set((s) => ({ rendimentosIsentos:     s.rendimentosIsentos.filter((x) => x.id !== id) })),
+  removeRendimentoExclusivo:(id)=> set((s) => ({ rendimentosExclusivos:  s.rendimentosExclusivos.filter((x) => x.id !== id) })),
+  removeOperacao:          (id) => set((s) => ({ operacoes:              s.operacoes.filter((x) => x.id !== id) })),
+  removeRendaVariavel:     (id) => set((s) => ({ rendaVariavel:          s.rendaVariavel.filter((x) => x.id !== id) })),
 
   clearMessages: () => set({ messages: [] }),
 

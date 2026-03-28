@@ -91,7 +91,7 @@ export function MainLayout() {
       <PanelGroup direction="horizontal" className="h-full">
         <Panel defaultSize={35} minSize={25} maxSize={55}>
           <div className="h-full flex flex-col overflow-hidden">
-            <div className="p-4 flex flex-col gap-4">
+            <div className="p-4 flex flex-col gap-4 overflow-y-auto max-h-[55%] min-h-0 shrink-0">
               <section>
                 <h2 className="text-sm font-semibold mb-2">Upload de Documentos</h2>
                 <DropZone />

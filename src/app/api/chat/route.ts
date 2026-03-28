@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/prisma'
 import { getLLMConfig } from '@/lib/settings'
 import { createProvider } from '@/lib/llm/factory'
+import { retrieveKnowledge, formatKnowledgeContext } from '@/lib/knowledge/retriever'
 import type { ChatMessage } from '@/lib/llm/types'
 
 export async function POST(req: NextRequest) {
@@ -17,20 +18,27 @@ export async function POST(req: NextRequest) {
 
   // Build document context
   const taxYearRecord = await prisma.taxYear.findUnique({ where: { year: taxYear } })
-  let context = ''
+  let documentContext = ''
   if (taxYearRecord) {
     const docs = await prisma.document.findMany({
       where: { taxYearId: taxYearRecord.id, processingStatus: 'done' },
       select: { filename: true, docType: true, rawText: true },
     })
     if (docs.length > 0) {
-      context = docs
+      documentContext = docs
         .filter((d) => d.rawText)
         .map((d) => `=== ${d.filename} (${d.docType}) ===\n${d.rawText!.slice(0, 3000)}`)
         .join('\n\n')
         .slice(0, 20000)
     }
   }
+
+  // Retrieve relevant IRPF knowledge based on user query
+  const knowledgeResults = retrieveKnowledge(message)
+  const knowledgeContext = formatKnowledgeContext(knowledgeResults)
+
+  // Combine contexts: knowledge base + user documents
+  const combinedContext = [knowledgeContext, documentContext].filter(Boolean).join('\n\n')
 
   // Load conversation history (last 20 messages)
   const history = await prisma.chatMessage.findMany({
@@ -62,7 +70,7 @@ export async function POST(req: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const tokens = provider.chat({ messages, context: context || undefined })
+        const tokens = provider.chat({ messages, context: combinedContext || undefined })
         for await (const token of tokens) {
           fullResponse += token
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'token', content: token })}\n\n`))

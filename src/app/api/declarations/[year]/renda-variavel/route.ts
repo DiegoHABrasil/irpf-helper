@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db/prisma'
 
+export async function DELETE(req: NextRequest) {
+  const id = Number(req.nextUrl.searchParams.get('id'))
+  if (isNaN(id)) return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
+  await prisma.irpfRendaVariavel.delete({ where: { id } })
+  return NextResponse.json({ ok: true })
+}
+
 const MES_NOME = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
 export async function GET(

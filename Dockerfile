@@ -32,6 +32,9 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 
+# Copy IRPF knowledge base files (used at runtime by the chat retriever)
+COPY --from=builder /app/src/lib/knowledge/topics ./knowledge/topics
+
 # Create data directories
 RUN mkdir -p data/uploads data/extracted && chown -R nextjs:nodejs data
 

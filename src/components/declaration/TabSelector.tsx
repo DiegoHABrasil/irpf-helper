@@ -8,6 +8,7 @@ export type DeclarationTab =
   | 'rendimentos_exclusivos'
   | 'renda_variavel'
   | 'operacoes'
+  | 'guia'
 
 const TABS: { id: DeclarationTab; label: string }[] = [
   { id: 'bens_direitos',         label: 'Bens e Direitos' },
@@ -15,6 +16,7 @@ const TABS: { id: DeclarationTab; label: string }[] = [
   { id: 'rendimentos_exclusivos',label: 'Rend. Trib. Exclusiva' },
   { id: 'renda_variavel',        label: 'Renda Variável' },
   { id: 'operacoes',             label: 'Operações' },
+  { id: 'guia',                  label: '📋 Guia de Preenchimento' },
 ]
 
 interface TabSelectorProps {

@@ -2,6 +2,7 @@ import { createOllama } from 'ollama-ai-provider'
 import { generateObject, streamText } from 'ai'
 import { z } from 'zod'
 import type { ChatMessage, ClassifyResult, JSONSchema, LLMProvider } from '../types'
+import { IRPF_SYSTEM_PROMPT } from '@/lib/knowledge/system-prompt'
 
 export class OllamaProvider implements LLMProvider {
   name = 'ollama'
@@ -32,8 +33,8 @@ export class OllamaProvider implements LLMProvider {
     context?: string
   }): AsyncIterable<string> {
     const systemContent = params.context
-      ? `Você é um assistente especialista em declaração de IRPF brasileiro. Use as informações dos documentos abaixo para responder:\n\n${params.context}`
-      : 'Você é um assistente especialista em declaração de IRPF brasileiro.'
+      ? `${IRPF_SYSTEM_PROMPT}\n\n## Informações Complementares\nUse as informações abaixo (base de conhecimento e documentos do usuário) para responder:\n\n${params.context}`
+      : IRPF_SYSTEM_PROMPT
 
     const result = await streamText({
       model: this.ollama(this.model),
@@ -73,7 +74,7 @@ function jsonSchemaToZod(schema: JSONSchema): Record<string, z.ZodTypeAny> {
 
   for (const [key, value] of Object.entries(schema.properties as Record<string, JSONSchema>)) {
     let zodType = jsonSchemaFieldToZod(value)
-    if (!required.includes(key)) zodType = zodType.optional()
+    if (!required.includes(key)) zodType = zodType.nullish()
     shape[key] = zodType
   }
   return shape
